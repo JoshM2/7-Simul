@@ -418,15 +418,15 @@ function toggleVisibility() {
 }
 
 document.querySelector("#letters").addEventListener("click", function() {
-  if (true) {
-    l = ["L","A","B","C","D","E","F","G","H","I","J","K"];
-  }
+  l = ["L","A","B","C","D","E","F","G","H","I","J","K"];
+  syncSettingsUrl();
 });
+
 document.querySelector("#ryan").addEventListener("click", function() {
-  if (true) {
-    l = ["0","1","2","3","4","5","6","E","D","C","B","A"];
-  }
+  l = ["0","1","2","3","4","5","6","E","D","C","B","A"];
+  syncSettingsUrl();
 });
+
 document.querySelector("#executionTrainer").addEventListener("click", function() {
   if (document.querySelector("#executionTrainer").checked) {
     executionMode=true
@@ -434,6 +434,7 @@ document.querySelector("#executionTrainer").addEventListener("click", function()
   else{
     executionMode=false
   }
+  syncSettingsUrl();
 });
 
 document.querySelector("#executionOnBlack").addEventListener("click", function() {
@@ -443,6 +444,7 @@ document.querySelector("#executionOnBlack").addEventListener("click", function()
   else{
     executeOnBlack=false
   }
+  syncSettingsUrl();
 });
 
 document.querySelector("#swapRPair").addEventListener("click", function() {
@@ -452,6 +454,7 @@ document.querySelector("#swapRPair").addEventListener("click", function() {
   else{
     swapRPair=false
   }
+  syncSettingsUrl();
 });
 
 function generateScramble() {
@@ -500,12 +503,43 @@ document.querySelector("#clock").addEventListener("click", function() {
 // show the timer when checkbox is clicked
 document.querySelector("#timerButton").addEventListener("click", function() {
   if (document.querySelector("#timerButton").checked) {
-    document.querySelector("#timer").style.display = "block";
+    document.querySelector("#timer").style.visibility = "visible";
   }
   else{
-    document.querySelector("#timer").style.display = "none";
+    document.querySelector("#timer").style.visibility = "hidden";
   }
+  syncSettingsUrl();
 });
+
+function applySettingsFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const settingsParam = params.get("settings");
+  const allSettings = ["executionTrainer", "executionOnBlack", "timerButton", "swapRPair"];
+  if (settingsParam !== null) {
+    const enabled = settingsParam.split(",").map(s => s.trim()).filter(s => s.length > 0);
+    allSettings.forEach(id => {
+      const checkbox = document.getElementById(id);
+      const isChecked = enabled.includes(id);
+      checkbox.checked = isChecked;
+      checkbox.dispatchEvent(new Event("click"));
+    });
+    const memoToken = enabled.find(s => s.startsWith('memoType_'));
+    if (memoToken) {
+      const memoId = memoToken.replace('memoType_', '');
+      const radio = document.getElementById(memoId);
+      if (radio) { radio.checked = true; radio.dispatchEvent(new Event("click")); }
+    }
+  }
+}
+
+function syncSettingsUrl() {
+  const ids = ['executionTrainer', 'executionOnBlack', 'timerButton', 'swapRPair'];
+  const checked = ids.filter(id => document.getElementById(id).checked);
+  const memoType = document.querySelector('input[name="memoType"]:checked').value;
+  if (memoType !== 'letters') checked.push('memoType_' + memoType);
+  const value = checked.join(',');
+  history.replaceState(null, '', value ? '?settings=' + value : window.location.pathname);
+}
 
 // all the code for the timer
 let timerInterval;
@@ -543,3 +577,4 @@ function resetTimer() {
   updateTimer();
 }
 startTimer()
+applySettingsFromURL();
